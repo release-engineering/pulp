@@ -765,24 +765,27 @@ class AtomicDirectoryPublishStep(PublishStep):
 
             if not self.only_publish_directory_contents:
                 # Create a temporary symlink in the parent of the published directory tree
-                tmp_link_name = os.path.join(publish_dir_parent, self.parent.timestamp)
-                os.symlink(timestamp_master_location, tmp_link_name)
+                #tmp_link_name = os.path.join(publish_dir_parent, self.parent.timestamp)
+                #os.symlink(timestamp_master_location, tmp_link_name)
 
                 # Rename the symlink to the official published location name.
                 # This has two desirable effects:
                 # 1. it will overwrite an existing link, if it's there
                 # 2. the operation is atomic, instantly changing the published directory
                 # NOTE: it's not easy (possible?) to directly edit the target of a symlink
-                os.rename(tmp_link_name, publish_location)
+                #os.rename(tmp_link_name, publish_location)
+                shutil.copytree(timestamp_master_location, publish_location)
+
             else:
                 if not os.path.exists(publish_location):
                     os.makedirs(publish_location, 0750)
                 for file_name in os.listdir(timestamp_master_location):
-                    tmp_link_name = os.path.join(publish_location, self.parent.timestamp)
+                    #tmp_link_name = os.path.join(publish_location, self.parent.timestamp)
                     master_source_file = os.path.join(timestamp_master_location, file_name)
-                    os.symlink(master_source_file, tmp_link_name)
+                    #os.symlink(master_source_file, tmp_link_name)
                     final_name = os.path.join(publish_location, file_name)
-                    os.rename(tmp_link_name, final_name)
+                    shutil.copytree(master_source_file, final_name)
+                    #os.rename(tmp_link_name, final_name)
 
         # Clear out any previously published masters
         self._clear_directory(self.master_publish_dir, skip_list=[self.parent.timestamp])
