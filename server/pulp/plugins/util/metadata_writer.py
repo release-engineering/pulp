@@ -361,7 +361,8 @@ class FastForwardXmlFileContext(XmlFileContext):
                         if gzip_handle:
                             gzip_handle.close()
                 # clean up the zipped file
-                os.unlink(self.existing_file)
+                new_file = self.existing_file.replace('original.', '')
+                os.rename(self.existing_file, new_file)
                 self.existing_file = non_compressed_file
 
             self.original_file_handle = open(os.path.join(working_dir, self.existing_file), 'r')
