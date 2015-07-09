@@ -80,7 +80,6 @@ def populate(num_units):
 
 # --- test cases --------------------------------------------------------------
 
-
 class QueryTests(ServerTests):
 
     def setUp(self):

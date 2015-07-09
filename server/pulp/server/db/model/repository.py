@@ -391,7 +391,8 @@ class RepoPublishResult(Model, ReaperMixin):
     RESULT_ERROR = 'error'
 
     @classmethod
-    def error_result(cls, repo_id, distributor_id, distributor_type_id, started, completed,
+    def error_result(cls, repo_id, distributor_id, distributor_type_id,
+                     distributor_config, started, completed,
                      exception, traceback):
         """
         Creates a new history entry for a failed publish. The details of the error
@@ -419,7 +420,8 @@ class RepoPublishResult(Model, ReaperMixin):
         @type  traceback: traceback
         """
 
-        r = cls(repo_id, distributor_id, distributor_type_id, started, completed, cls.RESULT_ERROR)
+        r = cls(repo_id, distributor_id, distributor_type_id, distributor_config,
+                started, completed, cls.RESULT_ERROR)
         r.error_message = str(exception)
         r.exception = repr(exception)
         r.traceback = traceback_module.format_tb(traceback)

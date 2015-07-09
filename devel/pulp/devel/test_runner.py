@@ -9,6 +9,11 @@ import subprocess
 import sys
 import argparse
 
+def which(prog):
+    p = subprocess.Popen(["which", prog], stdout=subprocess.PIPE)
+    p.wait()
+    return p
+    
 
 def run_tests(packages, tests_all_platforms, tests_non_rhel5,
               flake8_paths=None):
@@ -42,7 +47,7 @@ def run_tests(packages, tests_all_platforms, tests_non_rhel5,
     arguments = parser.parse_args()
 
     args = [
-        'nosetests',
+        which("nosetests").stdout.read().strip(),
     ]
 
     if arguments.enable_coverage:

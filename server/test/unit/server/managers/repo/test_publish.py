@@ -716,6 +716,7 @@ class TestDoPublish(base.PulpServerTests):
         transfer_repo = mock.MagicMock()
         conduit = mock.MagicMock()
         call_config = mock.MagicMock()
+        call_config.flatten.return_value = {}
         starting_term_handler = signal.getsignal(signal.SIGTERM)
 
         publish_manager.RepoPublishManager._do_publish(repo, distributor_id, distributor_instance,

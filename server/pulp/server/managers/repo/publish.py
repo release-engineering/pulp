@@ -127,6 +127,7 @@ class RepoPublishManager(object):
             # Add a publish history entry for the run
             result = RepoPublishResult.error_result(
                 repo_id, repo_distributor['id'], repo_distributor['distributor_type_id'],
+                call_config.flatten(),
                 publish_start_timestamp, publish_end_timestamp, e, sys.exc_info()[2])
             publish_result_coll.save(result, safe=True)
 
@@ -166,7 +167,6 @@ class RepoPublishManager(object):
 
         result = RepoPublishResult.expected_result(
             repo_id, repo_distributor['id'],
-            call_config.flatten(),
             repo_distributor['distributor_type_id'], call_config.flatten(),
             publish_start_timestamp, publish_end_timestamp, summary, details, result_code)
         publish_result_coll.save(result, safe=True)
