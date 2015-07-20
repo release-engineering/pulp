@@ -611,24 +611,39 @@ class RepoSyncManagerTests(base.PulpServerTests):
         Test there's distributor config included in publish history
         """
         # Setup
-        self.repo_manager.create_repo('test_date')
-        self.distributor_manager.add_distributor('test_date', 'mock-distributor', {}, True,
-                                                 distributor_id='test_dist')
+        self.repo_manager.create_repo('test_repo')
+        self.distributor_manager.add_distributor('test_repo', 'mock-distributor', {},
+                                                 True, distributor_id='test_dist')
+        entries = self.publish_manager.publish_history('test_date', 'test_dist')
+        self.assertTrue(len(entries) == 0)
         add_result('test_date', 'test_dist', 1)
-        entry = self.publish_manager.publish_history('test_date', 'test_dist')[0]
+        entry = self.publish_manager.publish_history('test_repo', 'test_dist')[0]
         self.assertTrue(hasattr(entry, "distributor_config"))
+        self.assertTrue("distributor_config" in entry, entry)
+        distributor_config = entry["distributor_config"]
+        self.assertTrue(distributor_config == {})
 
-    def test_publish_history_distributor_config(self):
-        """
-        Test there's distributor config included in publish history
-        """
-        # Setup
-        self.repo_manager.create_repo('test_date')
-        self.distributor_manager.add_distributor('test_date', 'mock-distributor', {}, True,
+        self.repo_manager.delete_repo('test_repo')
+        self.repo_manager.create_repo('test_repo')
+        self.distributor_manager.add_distributor('test_repo', 'mock-distributor',
+                                                 {"foo": "bar"}, True,
                                                  distributor_id='test_dist')
         add_result('test_date', 'test_dist', 1)
-        entry = self.publish_manager.publish_history('test_date', 'test_dist')[0]
-        self.assertTrue("distributor_config" in entry, entry)
+        entry = self.publish_manager.publish_history('test_repo', 'test_dist')[0]
+        distributor_config = entry["distributor_config"]
+        self.assertTrue(distributor_config == {"foo": "bar"})
+
+        self.repo_manager.delete_repo('test_repo')
+        self.repo_manager.create_repo('test_repo')
+        self.distributor_manager.add_distributor('test_repo', 'mock-distributor',
+                                                 {"foo": "bar"}, True,
+                                                 distributor_id='test_dist')
+        add_result('test_date', 'test_dist', 1)
+        self.distributor_manager.remove_distributor("test_repo", "mock-distributor")
+        entry = self.publish_manager.publish_history('test_repo', 'test_dist')[0]
+        distributor_config = entry["distributor_config"]
+        self.assertTrue(distributor_config == {"foo": "bar"})
+
 
     def _test_auto_distributors(self):
         """
