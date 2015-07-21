@@ -610,6 +610,20 @@ class RepoSyncManagerTests(base.PulpServerTests):
         """
         Test there's distributor config included in publish history
         """
+        self.repo_manager.create_repo('test_repo')
+        self.distributor_manager.add_distributor('test_repo', 'mock-distributor',
+                                                 {"foo": "bar"},
+                                                 True, distributor_id='test_dist')
+        _call = 'pulp.server.db.model.repository.RepoPublishResult.expected_result'
+        with mock.patch(_call) as call:
+            add_result('test_date', 'test_dist', 1, dist_config={"foo": "bar"})
+            self.assertTrue(call.expected_result.call_args[0][4] == {"foo": "bar"})
+        _call = 'pulp.server.db.model.repository.RepoPublishResult.error_result'
+        with mock.patch(_call) as call:
+            add_result('test_date', 'test_dist', 1, dist_config={"foo": "bar"},
+                       sucess=False)
+            self.assertTrue(call.expected_result.call_args[0][4] == {"foo": "bar"})
+
         # Setup
         self.repo_manager.create_repo('test_repo')
         self.distributor_manager.add_distributor('test_repo', 'mock-distributor', {},
@@ -643,7 +657,6 @@ class RepoSyncManagerTests(base.PulpServerTests):
         entry = self.publish_manager.publish_history('test_repo', 'test_dist')[0]
         distributor_config = entry["distributor_config"]
         self.assertTrue(distributor_config == {"foo": "bar"})
-
 
     def _test_auto_distributors(self):
         """
@@ -752,11 +765,17 @@ def assert_last_sync_time(time_in_iso):
     return difference.seconds < 2
 
 
-def add_result(repo_id, dist_id, offset):
+def add_result(repo_id, dist_id, offset, sucess=True, dist_config={}):
     started = dateutils.now_utc_datetime_with_tzinfo()
     completed = started + datetime.timedelta(days=offset)
-    r = RepoPublishResult.expected_result(
-        repo_id, dist_id, 'bar', {}, dateutils.format_iso8601_datetime(started),
-        dateutils.format_iso8601_datetime(completed), 'test-summary', 'test-details',
-        RepoPublishResult.RESULT_SUCCESS)
+    if sucess:
+        r = RepoPublishResult.expected_result(
+            repo_id, dist_id, 'bar', dist_config, dateutils.format_iso8601_datetime(started),
+            dateutils.format_iso8601_datetime(completed), 'test-summary', 'test-details',
+            RepoPublishResult.RESULT_SUCCESS)
+    else:
+        r = RepoPublishResult.error_result(
+            repo_id, dist_id, 'bar', dist_config, dateutils.format_iso8601_datetime(started),
+            dateutils.format_iso8601_datetime(completed), 'test-summary', 'test-details',
+            RepoPublishResult.RESULT_SUCCESS)
     RepoPublishResult.get_collection().insert(r, safe=True)
