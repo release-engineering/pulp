@@ -5,7 +5,9 @@ import os
 import subprocess
 import sys
 
+import pulp.devel.test_runner
 from pulp.devel.test_runner import run_tests
+print pulp.devel.test_runner.__file__
 
 # Find and eradicate any existing .pyc files, so they do not eradicate us!
 PROJECT_DIR = os.path.dirname(__file__)

@@ -614,25 +614,32 @@ class RepoSyncManagerTests(base.PulpServerTests):
         self.distributor_manager.add_distributor('test_repo', 'mock-distributor',
                                                  {"foo": "bar"},
                                                  True, distributor_id='test_dist')
+
+        original = RepoPublishResult.expected_result
         _call = 'pulp.server.db.model.repository.RepoPublishResult.expected_result'
         with mock.patch(_call) as call:
-            add_result('test_date', 'test_dist', 1, dist_config={"foo": "bar"})
-            self.assertTrue(call.expected_result.call_args[0][4] == {"foo": "bar"})
+            call.expected_result.side_effect = original
+            call.return_value = {"id":1}#original_call
+            add_result('test_repo', 'test_dist', 1, dist_config={"foo": "bar"})
+            self.assertTrue(call.call_args[0][3] == {"foo": "bar"})
+
+        original = RepoPublishResult.error_result
         _call = 'pulp.server.db.model.repository.RepoPublishResult.error_result'
-        with mock.patch(_call) as call:
-            add_result('test_date', 'test_dist', 1, dist_config={"foo": "bar"},
+        with mock.patch(_call, ) as call:
+            call.expected_result.side_effect = original
+            call.return_value = {"id":2}#original_call
+            add_result('test_repo', 'test_dist', 2, dist_config={"foo": "bar"},
                        sucess=False)
-            self.assertTrue(call.expected_result.call_args[0][4] == {"foo": "bar"})
+            self.assertTrue(call.call_args[0][3] == {"foo": "bar"})
 
         # Setup
-        self.repo_manager.create_repo('test_repo')
-        self.distributor_manager.add_distributor('test_repo', 'mock-distributor', {},
-                                                 True, distributor_id='test_dist')
-        entries = self.publish_manager.publish_history('test_date', 'test_dist')
+        #self.repo_manager.create_repo('test_repo')
+        #self.distributor_manager.add_distributor('test_repo', 'mock-distributor', {},
+        #                                         True, distributor_id='test_dist')
+        entries = self.publish_manager.publish_history('test_repo', 'test_dist')
         self.assertTrue(len(entries) == 0)
-        add_result('test_date', 'test_dist', 1)
+        add_result('test_repo', 'test_dist', 1)
         entry = self.publish_manager.publish_history('test_repo', 'test_dist')[0]
-        self.assertTrue(hasattr(entry, "distributor_config"))
         self.assertTrue("distributor_config" in entry, entry)
         distributor_config = entry["distributor_config"]
         self.assertTrue(distributor_config == {})
@@ -642,21 +649,21 @@ class RepoSyncManagerTests(base.PulpServerTests):
         self.distributor_manager.add_distributor('test_repo', 'mock-distributor',
                                                  {"foo": "bar"}, True,
                                                  distributor_id='test_dist')
-        add_result('test_date', 'test_dist', 1)
+        add_result('test_repo', 'test_dist', 1, dist_config={"foo": "bar"})
         entry = self.publish_manager.publish_history('test_repo', 'test_dist')[0]
         distributor_config = entry["distributor_config"]
-        self.assertTrue(distributor_config == {"foo": "bar"})
+        self.assertTrue(distributor_config == {"foo": "bar"}, distributor_config)
 
         self.repo_manager.delete_repo('test_repo')
         self.repo_manager.create_repo('test_repo')
         self.distributor_manager.add_distributor('test_repo', 'mock-distributor',
                                                  {"foo": "bar"}, True,
                                                  distributor_id='test_dist')
-        add_result('test_date', 'test_dist', 1)
-        self.distributor_manager.remove_distributor("test_repo", "mock-distributor")
-        entry = self.publish_manager.publish_history('test_repo', 'test_dist')[0]
-        distributor_config = entry["distributor_config"]
-        self.assertTrue(distributor_config == {"foo": "bar"})
+        #add_result('test_repo', 'test_dist', 1)
+        #self.distributor_manager.remove_distributor("test_repo", "test_dist")
+        #entry = self.publish_manager.publish_history('test_repo', 'test_dist')[0]
+        #distributor_config = entry["distributor_config"]
+        #self.assertTrue(distributor_config == {"foo": "bar"})
 
     def _test_auto_distributors(self):
         """
@@ -776,6 +783,7 @@ def add_result(repo_id, dist_id, offset, sucess=True, dist_config={}):
     else:
         r = RepoPublishResult.error_result(
             repo_id, dist_id, 'bar', dist_config, dateutils.format_iso8601_datetime(started),
-            dateutils.format_iso8601_datetime(completed), 'test-summary', 'test-details',
-            RepoPublishResult.RESULT_SUCCESS)
-    RepoPublishResult.get_collection().insert(r, safe=True)
+            dateutils.format_iso8601_datetime(completed), [],
+            RepoPublishResult.RESULT_ERROR)
+
+    RepoPublishResult.get_collection().insert([r], safe=True)

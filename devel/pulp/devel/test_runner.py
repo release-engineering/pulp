@@ -100,5 +100,6 @@ def run_tests(packages, tests_all_platforms, tests_non_rhel5,
         args.extend(['--xunit-file', '../test/' + arguments.xunit_file])
 
     print "Running Unit Tests"
+    print " ".join(args)
     # Call the test process, and return its exit code
     return subprocess.call(args) or flake8_exit_code
